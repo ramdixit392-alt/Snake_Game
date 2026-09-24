@@ -1,36 +1,82 @@
-const board = document.querySelector('#game-board');
+import { Game } from './game.js';
+import { setupInput } from './input.js';
 
-const snake = [
-    { x: 10, y: 5 },
-    { x: 9, y: 5 },
-    { x: 8, y: 5 }
-];
+const board = document.getElementById('game-board');
+
+let game;
+let interval;
 
 const createBoard = () => {
-    for (let y = 0; y < 10; y++) {
-        for (let x = 0; x < 20; x++) {
+    board.innerHTML = "";
+
+    for (let y = 0; y < game.rows; y++) {
+        for (let x = 0; x < game.columns; x++) {
+
             const cell = document.createElement('div');
-            cell.classList.add('cell');
+            cell.classList.add('cell'); // add a class to the cell for styling
             cell.dataset.x = x;
             cell.dataset.y = y;
             board.appendChild(cell);
+
         }
     }
-};
+}
 
-const renderSnake = () => {
-    snake.forEach((segment, index) => {
-        const cell = board.querySelector(
-            `[data-x="${segment.x}"][data-y="${segment.y}"]`
-        );
+const Render = () => {
+    const cells = board.children; // Get all cells in the board
 
-        cell.classList.add('snake');
+    // Clear
+    for (const cell of cells) {
+        cell.classList.remove("snake", "head", "food");
+    }
 
-        if (index === 0) {
-            cell.classList.add('head');
+    // Snake
+    game.snake
+        .getBody()
+        .forEach((segment, index) => {
+
+            const cell = board.querySelector(
+                `[data-x="${segment.x}"][data-y="${segment.y}"]`
+            );
+
+            if (!cell) return;
+
+            cell.classList.add("snake");
+
+            if (index === 0) {
+                cell.classList.add("head");
+            }
+
+        });
+}
+
+const startGame = () => {
+    clearInterval(interval);
+
+    // instance of game
+    game = new Game();
+
+    // create a board
+    createBoard();
+
+    // render the snake
+    Render();
+
+    // setInterval: is a built-in js function that calls a function at
+    // specified intervals (in ms). It returns an interval ID that can be used to
+    // clear the interval later using clearInterval.
+    interval = setInterval(() => {
+        game.update();
+        Render();
+
+        if (!game.running) {
+            clearInterval(interval);
         }
-    });
-};
+    }, game.speed);
 
-createBoard();
-renderSnake();
+    setupInput(direction => {
+        game.setDirection(direction);
+    });
+}
+
+startGame();
